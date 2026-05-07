@@ -98,7 +98,8 @@ import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress, getAccount, createAssociat
 
 const { Connection, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 // Global engine variable to persist the AI model in memory
-let globalAiEngine: any = null;
+import dynamic from 'next/dynamic'
+const AiOptimizer = dynamic(() => import('@/components/ai-optimizer'), { ssr: false })
 
 export function DesignaliCreative() {
   const router = useRouter()
@@ -425,62 +426,6 @@ export function DesignaliCreative() {
     setIsPosting(false)
   }
 
-  const handleAiOptimize = async () => {
-    if (!jobDescription || jobDescription.length < 5) {
-      toast.error("Please write a short description first.")
-      return
-    }
-    
-    setIsAiOptimizing(true)
-    const toastId = "ai-polish"
-    toast.loading("Sovereign AI: Analyzing via QVAC SDK...", { id: toastId })
-    
-    try {
-      // 1. Try Server-side AI first
-      const response = await fetch("/api/optimize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: jobDescription }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.result) {
-          setJobDescription(data.result);
-          toast.success("AI Polish Complete (Cloud SDK)!", { id: toastId });
-          setIsAiOptimizing(false);
-          return;
-        }
-      }
-
-      // 2. Fallback to Local AI (WebGPU)
-      toast.loading("Sovereign AI: Switching to Local Inference...", { id: toastId });
-      const { QvacEngine } = await import("@qvac/sdk");
-      if (!globalAiEngine) {
-        globalAiEngine = new QvacEngine();
-        await globalAiEngine.initialize();
-      }
-      const localRes = await globalAiEngine.chat(`Professionalize: ${jobDescription}`);
-      if (localRes?.content) {
-        setJobDescription(localRes.content);
-        toast.success("AI Polish Complete (Local SDK)!", { id: toastId });
-        setIsAiOptimizing(false);
-        return;
-      }
-
-      throw new Error("SDK unavailable");
-
-    } catch (err) {
-      // 3. Ultimate Fallback: High-fidelity simulation for the Demo Video
-      console.warn("AI Fallback triggered");
-      setTimeout(() => {
-        const optimizedText = `[Sovereign Optimized Description]\n\nPROPOSAL:\n${jobDescription}\n\nTECHNICAL ARCHITECTURE:\n- Trustless Escrow with PUSD\n- Sovereign AI Identity Verification\n- Confidential Umbra Transaction primitives`;
-        setJobDescription(optimizedText)
-        toast.success("AI Polish Complete (Sovereign Simulator)!", { id: toastId })
-        setIsAiOptimizing(false)
-      }, 1000);
-    }
-  }
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !activeChat || !user) return
@@ -812,16 +757,7 @@ export function DesignaliCreative() {
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label>Description</Label>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleAiOptimize} 
-                  disabled={isAiOptimizing}
-                  className="text-xs gap-1.5 text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 rounded-lg px-2 h-7"
-                >
-                  {isAiOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                  AI Polish (Local)
-                </Button>
+                <AiOptimizer description={jobDescription} onOptimize={setJobDescription} />
               </div>
               <Textarea value={jobDescription} onChange={e => setJobDescription(e.target.value)} className="bg-white/5 border-white/10 rounded-xl min-h-[120px]" />
             </div>
