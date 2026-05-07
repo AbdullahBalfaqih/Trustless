@@ -18,6 +18,7 @@ const nextConfig = {
       net: false,
       tls: false,
       dns: false,
+      url: false,
       "node:fs": false,
       "node:os": false,
       "node:path": false,
@@ -27,6 +28,7 @@ const nextConfig = {
       "node:net": false,
       "node:tls": false,
       "node:dns": false,
+      "node:url": false,
     };
     return config;
   },
@@ -41,6 +43,7 @@ const nextConfig = {
       net: { browser: "./empty-module.js" },
       tls: { browser: "./empty-module.js" },
       dns: { browser: "./empty-module.js" },
+      url: { browser: "./empty-module.js" },
       "node:fs": { browser: "./empty-module.js" },
       "node:os": { browser: "./empty-module.js" },
       "node:path": { browser: "./empty-module.js" },
@@ -50,6 +53,7 @@ const nextConfig = {
       "node:net": { browser: "./empty-module.js" },
       "node:tls": { browser: "./empty-module.js" },
       "node:dns": { browser: "./empty-module.js" },
+      "node:url": { browser: "./empty-module.js" },
     },
   },
   serverExternalPackages: ["@qvac/sdk"],

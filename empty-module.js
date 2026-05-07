@@ -19,7 +19,10 @@ export const resolve = (...args) => args.join("/");
 export const randomBytes = (size) => Buffer.alloc(size);
 export const createHash = () => ({ update: () => ({ digest: () => "" }) });
 
-// Missing export required by QVAC static analysis
+// Missing Node.js utilities required by QVAC browser environment
+export const fileURLToPath = (url) => url.replace('file://', '');
+export const pathToFileURL = (path) => `file://${path}`;
+
 export const promises = {
   readFile: async () => Buffer.from(""),
   writeFile: async () => {},
@@ -29,5 +32,5 @@ export const promises = {
   stat: async () => ({ isDirectory: () => false })
 };
 
-const empty = { promises };
+const empty = { promises, fileURLToPath, pathToFileURL };
 export default empty;
