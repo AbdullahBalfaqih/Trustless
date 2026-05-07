@@ -1,5 +1,4 @@
 import path from "path";
-import webpack from "webpack";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -9,7 +8,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
     const emptyModulePath = path.resolve("./empty-module.js");
 
     // 1. Broad Fallbacks
@@ -28,12 +27,11 @@ const nextConfig = {
     // 2. Precise Aliases for the actual files
     config.resolve.alias = {
       ...config.resolve.alias,
-      // Target the exact file that '#rpc' resolves to by default
       [path.resolve("node_modules/@qvac/sdk/dist/client/rpc/node-rpc-client.js")]: emptyModulePath,
       [path.resolve("node_modules/@qvac/sdk/dist/client/rpc/bare-client.js")]: emptyModulePath,
     };
 
-    // 3. NormalModuleReplacementPlugin: The most reliable way to intercept '#rpc'
+    // 3. Use the 'webpack' object provided by Next.js directly
     config.plugins.push(
       new webpack.NormalModuleReplacementPlugin(
         /#rpc/,
