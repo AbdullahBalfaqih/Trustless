@@ -12,12 +12,14 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
+    // 1. Check for WebGPU
     if (typeof window !== "undefined" && navigator.gpu) {
       setHasWebGPU(true);
     }
 
-    // Initialize the Stable Isolated Worker
+    // 2. Initialize the STABLE Isolated Worker
     if (typeof window !== "undefined" && !workerRef.current) {
+      // Using the public static worker to ensure zero build errors
       workerRef.current = new Worker("/qvac-worker.js");
       
       workerRef.current.onmessage = (e) => {
@@ -35,10 +37,10 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
             setIsOptimizing(false);
             setLoadProgress(0);
             setStatusText("");
-            toast.success("AI Polish Complete!");
+            toast.success("AI Build Complete!");
             break;
           case "ERROR":
-            toast.error(`AI Error: ${message}`);
+            toast.error(`Local AI Error: ${message}`);
             setIsOptimizing(false);
             setLoadProgress(0);
             break;
@@ -54,12 +56,12 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
     }
 
     if (!hasWebGPU) {
-      toast.error("WebGPU is not supported. Use Chrome/Edge on Desktop.");
+      toast.error("WebGPU is not supported on this device.");
       return;
     }
 
     if (!workerRef.current) {
-      toast.error("AI Engine is still warming up...");
+      toast.error("AI Engine is still initializing...");
       return;
     }
 
@@ -76,14 +78,14 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
   return (
     <div className="absolute right-4 bottom-4 flex flex-col items-end gap-3">
       {isOptimizing && (
-        <div className="w-56 bg-black/90 border border-purple-500/30 rounded-xl p-3 backdrop-blur-2xl shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex justify-between text-[10px] text-purple-300 mb-2 font-bold uppercase tracking-tight">
-            <span className="truncate max-w-[140px]">{statusText}</span>
-            <span>{loadProgress}%</span>
+        <div className="w-56 bg-black/95 border border-purple-500/40 rounded-xl p-3 backdrop-blur-3xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500 ring-1 ring-white/10">
+          <div className="flex justify-between text-[11px] text-purple-300 mb-2 font-black uppercase tracking-tighter">
+            <span className="truncate max-w-[140px] italic">{statusText}</span>
+            <span className="tabular-nums">{loadProgress}%</span>
           </div>
-          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 p-[1px]">
             <div 
-              className="h-full bg-gradient-to-r from-purple-600 to-fuchsia-500 transition-all duration-500 ease-out"
+              className="h-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-purple-600 bg-[length:200%_100%] animate-shimmer transition-all duration-500 ease-out rounded-full"
               style={{ width: `${loadProgress}%` }}
             />
           </div>
@@ -93,19 +95,19 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       <button
         onClick={handleRunAi}
         disabled={isOptimizing}
-        className="px-5 py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 text-xs font-bold rounded-2xl flex items-center gap-2 transition-all border border-purple-500/30 group min-w-[170px] justify-center shadow-lg active:scale-95"
+        className="px-6 py-3 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 text-xs font-black rounded-2xl flex items-center gap-3 transition-all border border-purple-500/50 group min-w-[180px] justify-center shadow-[0_0_20px_rgba(168,85,247,0.15)] active:scale-95"
       >
         {isOptimizing ? (
           <span className="flex items-center gap-2">
-            <div className="w-3.5 h-3.5 border-2 border-purple-400/20 border-t-purple-400 rounded-full animate-spin" />
-            LOCAL AI...
+            <div className="w-4 h-4 border-2 border-purple-400/20 border-t-purple-400 rounded-full animate-spin" />
+            WORKING...
           </span>
         ) : (
           <>
-            <svg className="w-4 h-4 text-purple-400 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4.5 h-4.5 text-purple-400 group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            Sovereign AI Builder
+            AI OPTIMIZER
           </>
         )}
       </button>
