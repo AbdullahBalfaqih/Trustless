@@ -6,11 +6,18 @@ export async function POST(req: Request) {
   try {
     const { description } = await req.json();
     
-    // Correctly import and instantiate based on the package's actual structure
+    // Deep inspection to find the correct constructor
     const sdk = await import("@qvac/sdk");
-    const Qvac = sdk.QvacClient || sdk.default?.QvacClient || sdk.default || sdk.QvacEngine;
+    console.log("QVAC SDK Keys:", Object.keys(sdk));
     
-    if (!Qvac) throw new Error("QVAC SDK class not found in package");
+    // Try to find the constructor among common patterns
+    let Qvac = sdk.QvacClient || sdk.QvacEngine || (typeof sdk.default === 'function' ? sdk.default : sdk.default?.QvacClient);
+    
+    if (!Qvac && typeof sdk === 'function') Qvac = sdk;
+    
+    if (!Qvac) {
+      throw new Error(`QVAC SDK structure unknown. Keys: ${Object.keys(sdk).join(", ")}`);
+    }
     
     const engine = new Qvac();
     
