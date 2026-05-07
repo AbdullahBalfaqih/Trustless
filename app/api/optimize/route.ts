@@ -1,46 +1,43 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 60; 
 
 export async function POST(req: Request) {
   try {
     const { description } = await req.json();
     
-    // Deep Subpath Discovery
-    let sdk: any = null;
-    try {
-      sdk = await import("@qvac/sdk");
-    } catch (e) {
-      console.warn("Main import failed, trying subpaths...");
+    // Import the functional API as per docs.qvac.tether.io
+    const qvac = await import("@qvac/sdk");
+    
+    // We use the models found in the previous inspection
+    const modelDescriptor = qvac.BERGAMOT_EN_AR || qvac.AFRICAN_4B_TRANSLATION_Q4_K_M;
+    
+    if (!qvac.loadModel || !qvac.completion) {
+      throw new Error("QVAC Functional API (loadModel/completion) not found in package.");
     }
 
-    let Qvac: any = sdk?.QvacClient || sdk?.QvacEngine || sdk?.Client;
-
-    if (!Qvac) {
-      try {
-        const clientSdk = await import("@qvac/sdk/client");
-        Qvac = clientSdk.QvacClient || clientSdk.default?.QvacClient || clientSdk.default;
-      } catch (e) {
-        try {
-          const distSdk = await import("@qvac/sdk/dist/index");
-          Qvac = distSdk.QvacClient || distSdk.QvacEngine || distSdk.default;
-        } catch (e2) {}
-      }
-    }
-
-    if (!Qvac) {
-      throw new Error(`Real AI Engine not found. Please ensure @qvac/sdk is installed correctly. Found keys: ${Object.keys(sdk || {}).slice(0, 5).join(", ")}`);
-    }
+    console.log("QVAC: Loading model...");
+    // 1. Load the model
+    const modelId = await qvac.loadModel({ 
+      modelSrc: modelDescriptor || "llama-3-8b-instruct" // Fallback to string if constant not found
+    });
     
-    const engine = new Qvac();
-    
-    await engine.initialize();
-    
-    const response = await engine.chat(`Improve this job description: ${description}`);
+    console.log("QVAC: Running completion...");
+    // 2. Run completion
+    const run = qvac.completion({
+      modelId,
+      history: [
+        { role: "user", content: `Professionalize this job description: ${description}` }
+      ]
+    });
 
-    return NextResponse.json({ result: response.content });
+    const result = await run.final;
+    
+    return NextResponse.json({ result: result.content });
   } catch (error: any) {
-    console.error("AI Route Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("QVAC Server Error:", error);
+    // If it fails due to memory/env constraints on Vercel, we report it clearly
+    return NextResponse.json({ error: `QVAC Error: ${error.message}` }, { status: 500 });
   }
 }
