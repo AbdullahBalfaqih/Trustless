@@ -6,10 +6,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // CRITICAL: Tells Next.js to NOT bundle this package. 
-  // It will be loaded natively by the server at runtime.
+  // Ensure native QVAC modules are loaded correctly on the server
   experimental: {
-    serverExternalPackages: ["@qvac/sdk"],
+    serverExternalPackages: ["@qvac/sdk", "@qvac/llm-llamacpp"],
   },
 };
 
