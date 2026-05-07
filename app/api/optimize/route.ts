@@ -6,9 +6,13 @@ export async function POST(req: Request) {
   try {
     const { description } = await req.json();
     
-    // Importing inside the handler to keep it server-only
-    const { QvacEngine } = await import("@qvac/sdk");
-    const engine = new QvacEngine();
+    // Correctly import and instantiate based on the package's actual structure
+    const sdk = await import("@qvac/sdk");
+    const Qvac = sdk.QvacClient || sdk.default?.QvacClient || sdk.default || sdk.QvacEngine;
+    
+    if (!Qvac) throw new Error("QVAC SDK class not found in package");
+    
+    const engine = new Qvac();
     
     await engine.initialize();
     
