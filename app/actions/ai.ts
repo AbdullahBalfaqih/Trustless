@@ -7,52 +7,52 @@ import {
 } from "@qvac/sdk";
 
 /**
- * Sovereign AI Engine (The $10k Hackathon Track Edition)
- * Pure Node.js execution via Next.js Server Actions.
- * 
- * WHY THIS WINS:
- * 1. Uses the official @qvac/sdk and @qvac/llm-llamacpp.
- * 2. Runs 100% locally on the device (where the server is hosted).
- * 3. Bypasses all browser bundling issues (Turbopack/Webpack).
+ * Sovereign AI Engine (Stable RPC Edition)
+ * Updated to handle timeouts and ensure the engine starts correctly.
  */
 
 let engineModelId: string | null = null;
 
 export async function PolishWithSovereignAI(description: string) {
   try {
-    console.log("🚀 Initializing QVAC Sovereign Engine...");
+    console.log("🚀 Starting QVAC Sovereign Engine...");
 
-    // 1. Load the model (Singleton pattern to prevent re-loading)
-    if (!engineModelId) {
-      engineModelId = await loadModel({
-        modelSrc: LLAMA_3_2_1B_INST_Q4_0,
-        modelType: "llm",
-        // Note: Progress is logged to the server console during load
-        onProgress: (p) => console.log(`[QVAC] Loading: ${Math.round(p.progress * 100)}%`),
-      });
-    }
+    // 1. Force a timeout limit for model loading to catch hangs early
+    const loadPromise = (async () => {
+      if (!engineModelId) {
+        engineModelId = await loadModel({
+          modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+          modelType: "llm",
+        });
+      }
+      return engineModelId;
+    })();
 
-    console.log("🧠 QVAC Reasoning started...");
+    // Timeout guard for 60 seconds (loading 1.5GB can be slow)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Model loading timed out. Check your GPU/RAM.")), 60000)
+    );
+
+    const modelId = await Promise.race([loadPromise, timeoutPromise]) as string;
+
+    console.log("🧠 Reasoning...");
 
     // 2. Perform Inference
     const result = await completion({
-      modelId: engineModelId!,
+      modelId: modelId,
       history: [
         {
           role: "user",
-          content: `You are a professional hiring expert. Take this job description and make it sound premium, professional, and well-structured. Keep the same meaning but improve the vocabulary and tone: \n\n${description}`,
+          content: `Professionalize this job description. Improve tone and structure while keeping the core details: \n\n${description}`,
         },
       ],
-      stream: false, // Simple response for stable server actions
     });
 
-    // 3. Finalize
+    // 3. Extract Result
     const finalResult = (result as any).final ? await (result as any).final : result;
     const content = typeof finalResult === "string" 
       ? finalResult 
       : finalResult?.content || finalResult?.text || finalResult;
-
-    console.log("✅ QVAC Polish Complete.");
 
     return {
       success: true,
@@ -60,10 +60,15 @@ export async function PolishWithSovereignAI(description: string) {
     };
 
   } catch (error: any) {
-    console.error("❌ QVAC Critical Error:", error);
+    console.error("❌ QVAC Error:", error);
+    
+    // If it's an RPC timeout, it might be due to a previous crashed process
+    // Clearing the cached ID to force a fresh start next time
+    engineModelId = null;
+
     return {
       success: false,
-      error: error?.message || "Local AI Engine offline. Ensure Vulkan/WebGPU is supported."
+      error: error?.message || "Sovereign Engine is busy or initializing. Please try again in a moment."
     };
   }
 }
