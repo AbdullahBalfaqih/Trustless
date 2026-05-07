@@ -6,10 +6,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Ensure native QVAC modules are loaded correctly on the server
-  experimental: {
-    serverExternalPackages: ["@qvac/sdk", "@qvac/llm-llamacpp"],
-  },
+  // In Next.js 15+, serverExternalPackages is a top-level property
+  serverExternalPackages: ["@qvac/sdk", "@qvac/llm-llamacpp"],
 };
 
 export default nextConfig;
