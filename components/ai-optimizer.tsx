@@ -1,10 +1,22 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+
+// Singleton to persist AI model across component re-renders
+let cachedModelId: string | null = null;
+let isInitializing = false;
 
 export default function AiOptimizer({ description, onOptimize }: { description: string, onOptimize: (val: string) => void }) {
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [hasWebGPU, setHasWebGPU] = useState(false);
+
+  // Check WebGPU support safely after mount to avoid hydration mismatch
+  useEffect(() => {
+    if (typeof window !== "undefined" && navigator.gpu) {
+      setHasWebGPU(true);
+    }
+  }, []);
 
   const handleRunAi = async () => {
     if (!description || description.length < 5) {
@@ -12,50 +24,57 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       return;
     }
 
+    if (!hasWebGPU) {
+      toast.error("WebGPU is not supported or disabled in your browser. Use Chrome/Edge for Sovereign AI.");
+      return;
+    }
+
     setIsOptimizing(true);
     const toastId = "qvac-ai";
-    toast.loading("Sovereign AI: Initializing QVAC SDK in Browser...", { id: toastId });
+    toast.loading("Sovereign AI: Initializing Local Intelligence...", { id: toastId });
 
     try {
-      // 0. Check for WebGPU support (Required for QVAC browser inference)
-      if (!navigator.gpu) {
-        throw new Error("WebGPU is not supported in this browser. Please use Chrome, Edge, or a browser with WebGPU enabled for local Sovereign AI.");
-      }
-
-      // 1. Dynamic import to ensure it only runs in browser
       const qvac = await import("@qvac/sdk");
       
-      toast.loading("Sovereign AI: Loading LLM to GPU (WebGPU)...", { id: toastId });
-      
-      // 2. Load the model using the official functional API
-      // We use LLAMA_3_2_1B_INST_Q4_0 as per docs
-      const modelId = await qvac.loadModel({ 
-        modelSrc: qvac.LLAMA_3_2_1B_INST_Q4_0 || "llama-3-8b-instruct",
-        modelType: "llm",
-        modelConfig: {}
-      });
+      // 1. Initialize or get cached model (1B is perfect for browser)
+      if (!cachedModelId && !isInitializing) {
+        isInitializing = true;
+        toast.loading("Sovereign AI: Downloading 1B Model (First time only)...", { id: toastId });
+        
+        // Use the smaller, web-friendly 1B model as recommended
+        cachedModelId = await qvac.loadModel({ 
+          modelSrc: "llama-3.2-1b-instruct", 
+          modelType: "llm",
+          modelConfig: { ctx_size: 2048 } // Smaller context for performance
+        });
+        isInitializing = false;
+      }
 
-      toast.loading("Sovereign AI: Processing Local Intelligence...", { id: toastId });
+      toast.loading("Sovereign AI: Generating Professional Text...", { id: toastId });
       
-      // 3. Run completion
+      // 2. Run completion
       const run = qvac.completion({
-        modelId,
+        modelId: cachedModelId!,
         history: [
-          { role: "user", content: `Professionalize and expand this job description: ${description}` }
+          { role: "user", content: `You are a career expert. Professionalize this job description: ${description}` }
         ]
       });
 
       const result = await run.final;
       
-      if (result && result.content) {
-        onOptimize(result.content);
-        toast.success("AI Polish Complete via Local QVAC SDK!", { id: toastId });
+      // 3. Handle result flexibly (content or text)
+      const finalContent = result.content || (result as any).text;
+      
+      if (finalContent) {
+        onOptimize(finalContent);
+        toast.success("Professional Optimization Complete!", { id: toastId });
       } else {
-        throw new Error("No response from QVAC engine");
+        throw new Error("Empty response from local AI");
       }
     } catch (err: any) {
-      console.error("QVAC Browser Error:", err);
-      toast.error(`QVAC Error: ${err.message}. Make sure your browser supports WebGPU.`, { id: toastId });
+      console.error("QVAC Error:", err);
+      toast.error(`Local AI Error: ${err.message}`, { id: toastId });
+      isInitializing = false; // Reset on failure
     } finally {
       setIsOptimizing(false);
     }
@@ -70,14 +89,14 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       {isOptimizing ? (
         <span className="flex items-center gap-2">
           <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          QVAC Processing...
+          Processing Locally...
         </span>
       ) : (
         <>
           <svg className="w-3.5 h-3.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          AI Polish (QVAC SDK)
+          Sovereign AI Polish
         </>
       )}
     </button>
