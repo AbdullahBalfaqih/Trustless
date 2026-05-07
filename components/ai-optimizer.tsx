@@ -23,7 +23,6 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
         if (!description) throw new Error("Write something to translate.");
         result = await TranslateWithSovereignAI(description, "ar");
       } else if (mode === "ocr") {
-        // For a real demo, we'd trigger a file picker
         toast.info("OCR Mode: Image upload triggered. (Demo)");
         setIsOptimizing(false);
         clearInterval(interval);
@@ -47,15 +46,17 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
   };
 
   return (
-    <div className="absolute right-4 bottom-4 flex flex-col items-end gap-3 z-50">
-      {/* Mode Selector */}
-      <div className="flex gap-1 p-1 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl">
+    <div className="absolute left-4 bottom-4 flex flex-col items-start gap-3 z-50">
+      {/* Mode Selector - White BG, Black Text */}
+      <div className="flex gap-1 p-1 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-xl shadow-xl">
         {(["polish", "translate", "ocr"] as const).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${
-              mode === m ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20" : "text-white/40 hover:text-white/60"
+            className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-tight rounded-lg transition-all duration-300 ${
+              mode === m 
+                ? "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.4)]" 
+                : "text-white/60 hover:text-white hover:bg-white/5"
             }`}
           >
             {m}
@@ -64,14 +65,14 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       </div>
 
       {isOptimizing && (
-        <div className="w-64 bg-black/95 border border-purple-500/40 rounded-2xl p-4 backdrop-blur-3xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 ring-1 ring-white/10">
-          <div className="flex justify-between text-[10px] text-purple-300 mb-2 font-black uppercase italic">
-            <span>Sovereign {mode} Engine...</span>
+        <div className="w-56 bg-black/90 border border-blue-500/40 rounded-2xl p-3 backdrop-blur-3xl shadow-2xl animate-in fade-in slide-in-from-bottom-2 ring-1 ring-white/10">
+          <div className="flex justify-between text-[9px] text-blue-300 mb-2 font-black uppercase italic tracking-widest">
+            <span>{mode} engine active</span>
             <span>{progress}%</span>
           </div>
-          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+          <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
             <div 
-              className="h-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-purple-600 bg-[length:200%_100%] animate-shimmer transition-all duration-700 rounded-full"
+              className="h-full bg-gradient-to-r from-blue-600 via-cyan-400 to-blue-600 bg-[length:200%_100%] animate-shimmer transition-all duration-700 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.5)]"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -81,14 +82,18 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       <button
         onClick={runTask}
         disabled={isOptimizing}
-        className="px-6 py-4 bg-purple-600/10 hover:bg-purple-600/20 text-purple-100 text-[11px] font-black rounded-2xl flex items-center gap-3 transition-all border border-purple-500/40 group min-w-[220px] justify-center shadow-2xl active:scale-95 backdrop-blur-3xl"
+        className="px-5 py-2.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-100 text-[10px] font-black rounded-xl flex items-center gap-2.5 transition-all border border-blue-500/50 group min-w-[180px] justify-center shadow-[0_0_30px_rgba(37,99,235,0.15)] active:scale-95 backdrop-blur-xl"
       >
-        <div className="p-1 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/40">
-           <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-           </svg>
-        </div>
-        SOVEREIGN {mode.toUpperCase()} ENGINE
+        {isOptimizing ? (
+          <div className="w-3.5 h-3.5 border-2 border-blue-400/20 border-t-blue-400 rounded-full animate-spin" />
+        ) : (
+          <div className="p-1 bg-blue-500/20 rounded-md group-hover:bg-blue-500/40 transition-colors">
+            <svg className="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+        )}
+        <span className="tracking-tight">SOVEREIGN {mode.toUpperCase()}</span>
       </button>
     </div>
   );
