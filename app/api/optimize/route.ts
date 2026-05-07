@@ -6,30 +6,30 @@ export async function POST(req: Request) {
   try {
     const { description } = await req.json();
     
-    // Automated Constructor Hunter
-    const sdk = await import("@qvac/sdk");
-    let Qvac: any = null;
-    
-    // 1. Check for known names
-    Qvac = sdk.QvacClient || sdk.QvacEngine || sdk.Client || sdk.Engine;
-    
-    // 2. If not found, look for ANY function/class in the export list
-    if (!Qvac) {
-      const keys = Object.keys(sdk);
-      for (const key of keys) {
-        if (typeof (sdk as any)[key] === 'function' && /^[A-Z]/.test(key)) {
-          Qvac = (sdk as any)[key];
-          console.log(`Found potential constructor: ${key}`);
-          break;
-        }
-      }
+    // Deep Subpath Discovery
+    let sdk: any = null;
+    try {
+      sdk = await import("@qvac/sdk");
+    } catch (e) {
+      console.warn("Main import failed, trying subpaths...");
     }
-    
-    // 3. Fallback to default if it's a constructor
-    if (!Qvac && typeof sdk.default === 'function') Qvac = sdk.default;
+
+    let Qvac: any = sdk?.QvacClient || sdk?.QvacEngine || sdk?.Client;
 
     if (!Qvac) {
-      throw new Error(`Could not find a valid QVAC constructor. Available keys: ${Object.keys(sdk).slice(0, 10).join(", ")}...`);
+      try {
+        const clientSdk = await import("@qvac/sdk/client");
+        Qvac = clientSdk.QvacClient || clientSdk.default?.QvacClient || clientSdk.default;
+      } catch (e) {
+        try {
+          const distSdk = await import("@qvac/sdk/dist/index");
+          Qvac = distSdk.QvacClient || distSdk.QvacEngine || distSdk.default;
+        } catch (e2) {}
+      }
+    }
+
+    if (!Qvac) {
+      throw new Error(`Real AI Engine not found. Please ensure @qvac/sdk is installed correctly. Found keys: ${Object.keys(sdk || {}).slice(0, 5).join(", ")}`);
     }
     
     const engine = new Qvac();
