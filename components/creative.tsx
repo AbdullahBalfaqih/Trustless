@@ -433,45 +433,40 @@ export function DesignaliCreative() {
     
     setIsAiOptimizing(true)
     const toastId = "qvac-ai"
-    toast.loading("QVAC: Initializing Local Intelligence...", { id: toastId })
+    toast.loading("QVAC v3: Initializing...", { id: toastId })
     
     try {
       if (isDemoMode) {
-        await new Promise(r => setTimeout(r, 1500));
-        const mockResult = `Professional Job Posting: ${jobDescription}\n\nDeliverables:\n- High-quality mobile/web application\n- Clean, documented source code\n- Sovereign AI integration\n\nSkills Required:\n- Solana/Rust\n- React/Next.js\n- QVAC SDK\n\nSuccess Criteria:\n- 100% On-time delivery\n- Privacy-first architecture`;
+        await new Promise(r => setTimeout(r, 1000));
+        const mockResult = `Optimized Description: ${jobDescription}\n\nDeliverables:\n- Sovereign Architecture\n- Local AI Integration\n- Solana Escrow Vault\n\nTarget Skills: Rust, Next.js, QVAC.`;
         setJobDescription(mockResult);
-        toast.success("AI Analysis (Demo Mode) Completed!", { id: toastId });
+        toast.success("AI Content Generated (Demo Mode)!", { id: toastId });
         setIsAiOptimizing(false);
         return;
       }
 
-      // 1. Dynamically import the SDK to avoid build-time node dependency issues
+      // Dynamic import to avoid build errors
       const { QvacEngine } = await import("@qvac/sdk");
       
-      // 2. Access the global engine variable
       if (!globalAiEngine) {
-        toast.loading("QVAC v2: Loading Model into GPU...", { id: toastId });
+        toast.loading("QVAC v3: Loading GPU Engine...", { id: toastId });
         globalAiEngine = new QvacEngine();
         await globalAiEngine.initialize();
       }
 
-      toast.loading("QVAC v2: Reasoning locally...", { id: toastId });
+      toast.loading("QVAC v3: Local Reasoning...", { id: toastId });
+      const response = await globalAiEngine.chat(`Improve this job description: ${jobDescription}`);
       
-      const prompt = `You are a professional project recruiter. Improve and expand this job description.
-      Description: ${jobDescription}`;
-
-      const response = await globalAiEngine.chat(prompt);
-      
-      if (response && response.content) {
+      if (response?.content) {
         setJobDescription(response.content)
-        toast.success("AI Analysis completed locally!", { id: toastId })
+        toast.success("AI Success: Local Analysis Complete!", { id: toastId })
       } else {
-        throw new Error("No response from local engine");
+        throw new Error("Local engine timeout");
       }
       
     } catch (err: any) {
       console.error("QVAC Error:", err)
-      toast.error(`AI Failed (v2): ${err.message}`, { id: toastId })
+      toast.error(`AI Failed (v3): ${err.message}. Try turning ON Demo Mode for the video.`, { id: toastId })
     } finally {
       setIsAiOptimizing(false)
     }
