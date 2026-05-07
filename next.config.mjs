@@ -8,8 +8,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  webpack: (config) => {
-    // 1. Core Node Fallbacks for the Browser
+  webpack: (config, { isServer }) => {
+    // 1. Force absolute path for the empty module
+    const emptyModulePath = path.resolve("./empty-module.js");
+
+    // 2. Global Fallbacks
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
@@ -17,17 +20,30 @@ const nextConfig = {
       os: false,
       crypto: false,
       stream: false,
-      url: false,
       "node:fs": false,
       "node:path": false,
+      "node:os": false,
     };
 
-    // 2. The 'Winner' Alias: Kill the Node-specific RPC layer that causes Vercel errors
-    const emptyModulePath = path.resolve("./empty-module.js");
+    // 3. The "Nuclear" Alias: Block the specific Node RPC file causing the trace
     config.resolve.alias = {
       ...config.resolve.alias,
+      // Target the EXACT relative path used by the SDK internal imports
       "@qvac/sdk/dist/client/rpc/node-rpc-client.js": emptyModulePath,
+      "#rpc": emptyModulePath, 
     };
+
+    // 4. Force externals for anything that might still sneak through
+    if (!isServer) {
+      config.externals = [
+        ...(config.externals || []),
+        {
+          "node:os": "undefined",
+          "node:path": "undefined",
+          "node:fs": "undefined",
+        },
+      ];
+    }
 
     return config;
   },
