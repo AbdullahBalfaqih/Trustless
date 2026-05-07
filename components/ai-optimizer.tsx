@@ -17,9 +17,11 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       setHasWebGPU(true);
     }
 
-    // 2. Initialize Worker once
+    // 2. Initialize Bundled Worker once
     if (typeof window !== "undefined" && !workerRef.current) {
-      workerRef.current = new Worker("/qvac-worker.js");
+      workerRef.current = new Worker(
+        new URL("../workers/qvac-worker.ts", import.meta.url)
+      );
       
       workerRef.current.onmessage = (e) => {
         const { type, text, progress, content, message } = e.data;
