@@ -11,8 +11,6 @@ export const metadata: Metadata = {
   description: "Secure, on-chain employment and payments on Solana.",
 };
 
-import Script from "next/script";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -21,10 +19,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-black text-white antialiased`}>
-        <Script
-          src="https://cdn.jsdelivr.net/npm/@qvac/sdk/dist/browser/qvac.min.js"
-          strategy="beforeInteractive"
-        />
         <Web3Provider>
           {children}
           <Toaster position="top-center" theme="dark" closeButton />
