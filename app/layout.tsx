@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   description: "Secure, on-chain employment and payments on Solana.",
 };
 
+export const runtime = "nodejs";
+export const maxDuration = 120;
+
 export default function RootLayout({
   children,
 }: Readonly<{
