@@ -1,13 +1,14 @@
 "use client";
 
 /**
- * Loads the QVAC SDK using eval('import') to bypass Next.js static analysis.
- * This prevents the bundler from trying to resolve Node.js dependencies at build time.
+ * Loads the QVAC SDK using standard dynamic import.
+ * Since we are now forcing Webpack via --webpack, the fallbacks in next.config.mjs
+ * will correctly handle Node.js dependencies without crashing the build.
  */
 export async function loadQvac() {
   if (typeof window === "undefined") return null;
   
-  // The 'eval' trick hides the dynamic import from Webpack/Turbopack static scanners
-  const qvac = await eval('import("@qvac/sdk")');
+  // Back to standard dynamic import now that Webpack is forced
+  const qvac = await import("@qvac/sdk");
   return qvac;
 }
