@@ -436,33 +436,42 @@ export function DesignaliCreative() {
     toast.loading("QVAC: Initializing Local Intelligence...", { id: toastId })
     
     try {
+      if (isDemoMode) {
+        await new Promise(r => setTimeout(r, 1500));
+        const mockResult = `Professional Job Posting: ${jobDescription}\n\nDeliverables:\n- High-quality mobile/web application\n- Clean, documented source code\n- Sovereign AI integration\n\nSkills Required:\n- Solana/Rust\n- React/Next.js\n- QVAC SDK\n\nSuccess Criteria:\n- 100% On-time delivery\n- Privacy-first architecture`;
+        setJobDescription(mockResult);
+        toast.success("AI Analysis (Demo Mode) Completed!", { id: toastId });
+        setIsAiOptimizing(false);
+        return;
+      }
+
       // 1. Dynamically import the SDK to avoid build-time node dependency issues
       const { QvacEngine } = await import("@qvac/sdk");
       
       // 2. Access the global engine variable
       if (!globalAiEngine) {
-        toast.loading("QVAC: Loading Model into GPU...", { id: toastId });
+        toast.loading("QVAC v2: Loading Model into GPU...", { id: toastId });
         globalAiEngine = new QvacEngine();
         await globalAiEngine.initialize();
       }
 
-      toast.loading("QVAC: Reasoning locally (Sovereign Intelligence)...", { id: toastId });
+      toast.loading("QVAC v2: Reasoning locally...", { id: toastId });
       
-      const prompt = `You are a professional project recruiter. Improve and expand this job description. Keep it concise but professional.
+      const prompt = `You are a professional project recruiter. Improve and expand this job description.
       Description: ${jobDescription}`;
 
       const response = await globalAiEngine.chat(prompt);
       
       if (response && response.content) {
         setJobDescription(response.content)
-        toast.success("AI Analysis completed locally on your device!", { id: toastId })
+        toast.success("AI Analysis completed locally!", { id: toastId })
       } else {
         throw new Error("No response from local engine");
       }
       
     } catch (err: any) {
       console.error("QVAC Error:", err)
-      toast.error(`AI Failed: ${err.message}`, { id: toastId })
+      toast.error(`AI Failed (v2): ${err.message}`, { id: toastId })
     } finally {
       setIsAiOptimizing(false)
     }
