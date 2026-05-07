@@ -6,17 +6,30 @@ export async function POST(req: Request) {
   try {
     const { description } = await req.json();
     
-    // Deep inspection to find the correct constructor
+    // Automated Constructor Hunter
     const sdk = await import("@qvac/sdk");
-    console.log("QVAC SDK Keys:", Object.keys(sdk));
+    let Qvac: any = null;
     
-    // Try to find the constructor among common patterns
-    let Qvac = sdk.QvacClient || sdk.QvacEngine || (typeof sdk.default === 'function' ? sdk.default : sdk.default?.QvacClient);
+    // 1. Check for known names
+    Qvac = sdk.QvacClient || sdk.QvacEngine || sdk.Client || sdk.Engine;
     
-    if (!Qvac && typeof sdk === 'function') Qvac = sdk;
-    
+    // 2. If not found, look for ANY function/class in the export list
     if (!Qvac) {
-      throw new Error(`QVAC SDK structure unknown. Keys: ${Object.keys(sdk).join(", ")}`);
+      const keys = Object.keys(sdk);
+      for (const key of keys) {
+        if (typeof (sdk as any)[key] === 'function' && /^[A-Z]/.test(key)) {
+          Qvac = (sdk as any)[key];
+          console.log(`Found potential constructor: ${key}`);
+          break;
+        }
+      }
+    }
+    
+    // 3. Fallback to default if it's a constructor
+    if (!Qvac && typeof sdk.default === 'function') Qvac = sdk.default;
+
+    if (!Qvac) {
+      throw new Error(`Could not find a valid QVAC constructor. Available keys: ${Object.keys(sdk).slice(0, 10).join(", ")}...`);
     }
     
     const engine = new Qvac();
