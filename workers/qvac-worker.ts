@@ -5,8 +5,7 @@ import {
 } from "@qvac/sdk";
 
 /**
- * Sovereign AI Worker (Final Module Edition)
- * Pure ESM implementation compatible with Next.js/Webpack bundling.
+ * Sovereign AI Worker (Stable Module Edition)
  */
 
 let modelId: string | null = null;
@@ -17,10 +16,11 @@ self.onmessage = async (e: MessageEvent) => {
   if (type !== "RUN_OPTIMIZE") return;
 
   try {
-    // 1. Load Model (Singleton)
+    // 1. Initial Status
+    self.postMessage({ type: "STATUS", text: "Initializing GPU Engine..." });
+
+    // 2. Load Model (Singleton)
     if (!modelId) {
-      self.postMessage({ type: "STATUS", text: "Initializing Local LLM..." });
-      
       modelId = await loadModel({
         modelSrc: LLAMA_3_2_1B_INST_Q4_0,
         modelType: "llm",
@@ -30,9 +30,9 @@ self.onmessage = async (e: MessageEvent) => {
       });
     }
 
-    self.postMessage({ type: "STATUS", text: "Reasoning on GPU..." });
+    self.postMessage({ type: "STATUS", text: "Optimizing neural layers..." });
 
-    // 2. Inference
+    // 3. Inference
     const result = await completion({
       modelId: modelId!,
       history: [
@@ -42,8 +42,6 @@ self.onmessage = async (e: MessageEvent) => {
         },
       ],
     });
-
-    self.postMessage({ type: "STATUS", text: "Finalizing..." });
 
     const final = (result as any).final ? await (result as any).final : result;
     const content = typeof final === "string" 
@@ -56,10 +54,10 @@ self.onmessage = async (e: MessageEvent) => {
     });
 
   } catch (err: any) {
-    console.error("Worker Execution Error:", err);
+    console.error("Worker Error:", err);
     self.postMessage({ 
       type: "ERROR", 
-      message: err?.message || "Internal Sovereign AI Error" 
+      message: err?.message || "Local AI Execution Error" 
     });
   }
 };

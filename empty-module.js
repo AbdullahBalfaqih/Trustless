@@ -1,2 +1,2 @@
-// This file is used as a placeholder to block Node-specific imports in the QVAC SDK.
+// Mock for Node-specific modules in QVAC SDK
 export default {};

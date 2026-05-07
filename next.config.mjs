@@ -8,8 +8,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  webpack: (config) => {
-    // 1. Core Node Fallbacks for the Browser
+  webpack: (config, { isServer, webpack }) => {
+    // 1. Add Fallbacks for Node.js modules
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
@@ -23,13 +23,17 @@ const nextConfig = {
       "node:os": false,
     };
 
-    // 2. The Master Fix: Force-replace the specific file causing the Vercel error
-    // We point the Node RPC client to a completely empty file
+    // 2. Block the specific problematic RPC file
     const emptyModulePath = path.resolve("./empty-module.js");
     config.resolve.alias = {
       ...config.resolve.alias,
       "@qvac/sdk/dist/client/rpc/node-rpc-client.js": emptyModulePath,
     };
+
+    // 3. Ensure the worker can be bundled
+    if (!isServer) {
+      config.output.globalObject = "self";
+    }
 
     return config;
   },
