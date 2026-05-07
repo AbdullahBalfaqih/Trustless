@@ -18,9 +18,11 @@ export async function POST(req: Request) {
     }
 
     console.log("QVAC: Loading model...");
-    // 1. Load the model
+    // 1. Load the model with explicit type and config to satisfy validation
     const modelId = await qvac.loadModel({ 
-      modelSrc: modelDescriptor || "llama-3-8b-instruct" // Fallback to string if constant not found
+      modelType: "llm", // Explicitly set as LLM
+      modelSrc: modelDescriptor || "llama-3-8b-instruct",
+      modelConfig: {} // Required by the SDK validation
     });
     
     console.log("QVAC: Running completion...");
