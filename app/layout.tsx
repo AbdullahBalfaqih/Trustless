@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 600;
 
 export default function RootLayout({
   children,

@@ -15,22 +15,27 @@ let engineModelId: string | null = null;
 
 export async function PolishWithSovereignAI(description: string) {
   try {
-    console.log("🚀 Starting QVAC Sovereign Engine...");
+    console.log("🚀 Starting QVAC Sovereign Engine (10m timeout mode)...");
+    
+    // Set internal SDK timeout variable
+    process.env.QVAC_RPC_TIMEOUT = "600000";
 
-    // 1. Force a timeout limit for model loading to catch hangs early
+    // 1. Force a timeout limit for model loading
     const loadPromise = (async () => {
       if (!engineModelId) {
         engineModelId = await loadModel({
           modelSrc: LLAMA_3_2_1B_INST_Q4_0,
           modelType: "llm",
+          // @ts-ignore - Attempting to override internal timeout
+          timeout: 600000,
         });
       }
       return engineModelId;
     })();
 
-    // Timeout guard for 60 seconds (loading 1.5GB can be slow)
+    // Timeout guard for 10 minutes
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Model loading timed out. Check your GPU/RAM.")), 60000)
+      setTimeout(() => reject(new Error("Sovereign Engine failed to initialize after 10 minutes.")), 600000)
     );
 
     const modelId = await Promise.race([loadPromise, timeoutPromise]) as string;
