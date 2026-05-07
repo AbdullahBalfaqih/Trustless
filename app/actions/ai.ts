@@ -26,8 +26,6 @@ export async function PolishWithSovereignAI(description: string) {
         engineModelId = await loadModel({
           modelSrc: LLAMA_3_2_1B_INST_Q4_0,
           modelType: "llm",
-          // @ts-ignore - Attempting to override internal timeout
-          timeout: 300000,
         });
       }
       return engineModelId;
