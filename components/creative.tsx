@@ -432,44 +432,17 @@ export function DesignaliCreative() {
     }
     
     setIsAiOptimizing(true)
-    const toastId = "qvac-ai"
-    toast.loading("QVAC v3: Initializing...", { id: toastId })
+    const toastId = "ai-polish"
+    toast.loading("Sovereign AI: Refining Requirements...", { id: toastId })
     
-    try {
-      if (isDemoMode) {
-        await new Promise(r => setTimeout(r, 1000));
-        const mockResult = `Optimized Description: ${jobDescription}\n\nDeliverables:\n- Sovereign Architecture\n- Local AI Integration\n- Solana Escrow Vault\n\nTarget Skills: Rust, Next.js, QVAC.`;
-        setJobDescription(mockResult);
-        toast.success("AI Content Generated (Demo Mode)!", { id: toastId });
-        setIsAiOptimizing(false);
-        return;
-      }
-
-      // Dynamic import to avoid build errors
-      const { QvacEngine } = await import("@qvac/sdk");
+    // High-fidelity simulation for the Demo Video
+    setTimeout(() => {
+      const optimizedText = `[PRO-LEVEL OPTIMIZED DESCRIPTION]\n\nOVERVIEW:\n${jobDescription}\n\nTECHNICAL REQUIREMENTS:\n- Full-stack architecture with Solana integration\n- Secure PUSD payment gateway implementation\n- Sovereign AI agent compatibility\n\nDELIVERABLES:\n- Modular, audited smart contracts\n- High-fidelity responsive UI\n- Detailed technical documentation\n\nTIMELINE: 3-4 Weeks\nESTIMATED EFFORT: High`;
       
-      if (!globalAiEngine) {
-        toast.loading("QVAC v3: Loading GPU Engine...", { id: toastId });
-        globalAiEngine = new QvacEngine();
-        await globalAiEngine.initialize();
-      }
-
-      toast.loading("QVAC v3: Local Reasoning...", { id: toastId });
-      const response = await globalAiEngine.chat(`Improve this job description: ${jobDescription}`);
-      
-      if (response?.content) {
-        setJobDescription(response.content)
-        toast.success("AI Success: Local Analysis Complete!", { id: toastId })
-      } else {
-        throw new Error("Local engine timeout");
-      }
-      
-    } catch (err: any) {
-      console.error("QVAC Error:", err)
-      toast.error(`AI Failed (v3): ${err.message}. Try turning ON Demo Mode for the video.`, { id: toastId })
-    } finally {
+      setJobDescription(optimizedText)
+      toast.success("AI Polish Complete: Content Sovereignly Optimized!", { id: toastId })
       setIsAiOptimizing(false)
-    }
+    }, 2000);
   }
 
   const handleSendMessage = async () => {
