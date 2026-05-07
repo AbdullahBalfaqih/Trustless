@@ -7,7 +7,6 @@ import { toast } from "sonner";
 let cachedEngine: any = null;
 let cachedModel: any = null;
 let isInitializing = false;
-let sdkLoaded = false;
 
 export default function AiOptimizer({ description, onOptimize }: { description: string, onOptimize: (val: string) => void }) {
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -19,54 +18,15 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
     if (typeof window !== "undefined" && navigator.gpu) {
       setHasWebGPU(true);
     }
-  }, []);
-
-  const loadSdkWithProgress = async () => {
-    if (sdkLoaded || (window as any).qvac) return true;
     
-    setStatusText("Downloading QVAC SDK...");
-    const url = "https://cdn.jsdelivr.net/npm/@qvac/sdk/dist/browser/qvac.min.js";
-    
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Failed to fetch SDK");
-      
-      const contentLength = response.headers.get('content-length');
-      const total = contentLength ? parseInt(contentLength, 10) : 0;
-      let loaded = 0;
-      
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("Body reader not available");
-      
-      const chunks = [];
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        loaded += value.length;
-        if (total > 0) {
-          setLoadProgress(Math.round((loaded / total) * 100));
-        }
-      }
-      
-      const blob = new Blob(chunks, { type: 'application/javascript' });
-      const scriptUrl = URL.createObjectURL(blob);
-      
-      return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = scriptUrl;
-        script.onload = () => {
-          sdkLoaded = true;
-          resolve(true);
-        };
-        script.onerror = reject;
-        document.head.appendChild(script);
-      });
-    } catch (err) {
-      console.error("SDK Load Error:", err);
-      return false;
+    // Inject SDK script normally to avoid CORS issues, but do it here for better control
+    if (typeof window !== "undefined" && !(window as any).qvac) {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/@qvac/sdk/dist/browser/qvac.min.js";
+      script.async = true;
+      document.head.appendChild(script);
     }
-  };
+  }, []);
 
   const handleRunAi = async () => {
     if (!description || description.length < 5) {
@@ -79,46 +39,42 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       return;
     }
 
-    setIsOptimizing(true);
-    setLoadProgress(0);
-    
-    // 1. Manually load SDK with progress if missing
-    const loaded = await loadSdkWithProgress();
-    if (!loaded) {
-      toast.error("Failed to load AI Engine. Check your connection.");
-      setIsOptimizing(false);
+    const qvac = (window as any).qvac || (window as any).QVAC;
+    if (!qvac) {
+      toast.info("The AI Engine is still initializing. Please wait 10 seconds and try again.");
       return;
     }
 
-    const qvac = (window as any).qvac || (window as any).QVAC;
+    setIsOptimizing(true);
     const toastId = "qvac-ai";
 
     try {
-      // 2. Initialize Engine
+      // 1. Initialize Engine
       if (!cachedEngine) {
-        setStatusText("Initializing GPU Engine...");
+        setStatusText("Waking up GPU...");
         cachedEngine = await qvac.createEngine({ backend: "webgpu" });
       }
 
-      // 3. Load Model with Progress Tracking
+      // 2. Load Model with Progress Tracking
       if (!cachedModel && !isInitializing) {
         isInitializing = true;
-        setStatusText("Downloading LLM Model...");
-        setLoadProgress(0);
+        setStatusText("Downloading LLM (1.5GB)...");
         
         cachedModel = await qvac.createModel(cachedEngine, {
           provider: "@qvac/llm-llamacpp",
           model: "llama-3.2-1b-instruct",
           onProgress: (p: any) => {
-            setLoadProgress(Math.round(p.progress * 100));
+            const percent = Math.round(p.progress * 100);
+            setLoadProgress(percent);
           }
         });
         isInitializing = false;
       }
 
-      setStatusText("Generating Optimized Text...");
-      setLoadProgress(0);
+      setStatusText("Finalizing Build...");
+      setLoadProgress(100);
       
+      // 3. Generate
       const result = await cachedModel.generate({
         prompt: `Professionalize and structure this job description: ${description}`,
       });
@@ -127,13 +83,13 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       
       if (finalContent) {
         onOptimize(finalContent);
-        toast.success("AI Polish Complete!");
+        toast.success("Professional AI Polish Complete!");
       } else {
-        throw new Error("No output");
+        throw new Error("Empty AI response");
       }
     } catch (err: any) {
       console.error("QVAC Local Error:", err);
-      toast.error(`Local AI Error: ${err.message}`);
+      toast.error(`AI Error: ${err.message}`);
       isInitializing = false;
     } finally {
       setIsOptimizing(false);
@@ -145,14 +101,14 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
   return (
     <div className="absolute right-4 bottom-4 flex flex-col items-end gap-3">
       {isOptimizing && (
-        <div className="w-56 bg-black/80 border border-white/20 rounded-xl p-3 backdrop-blur-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-          <div className="flex justify-between text-[11px] text-purple-300 mb-2 font-bold px-1 tracking-tight">
-            <span className="truncate max-w-[120px] uppercase">{statusText}</span>
+        <div className="w-56 bg-black/90 border border-purple-500/30 rounded-xl p-3 backdrop-blur-3xl shadow-[0_0_30px_rgba(168,85,247,0.2)] animate-in fade-in slide-in-from-bottom-3 duration-500">
+          <div className="flex justify-between text-[11px] text-purple-300 mb-2 font-black uppercase tracking-widest">
+            <span className="truncate max-w-[140px]">{statusText}</span>
             <span>{loadProgress}%</span>
           </div>
-          <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">
+          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 p-[1px]">
             <div 
-              className="h-full bg-gradient-to-r from-purple-500 via-fuchsia-500 to-purple-500 bg-[length:200%_100%] animate-shimmer transition-all duration-300 ease-out"
+              className="h-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-purple-600 bg-[length:200%_100%] animate-shimmer transition-all duration-500 ease-out rounded-full"
               style={{ width: `${loadProgress}%` }}
             />
           </div>
@@ -162,12 +118,12 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       <button
         onClick={handleRunAi}
         disabled={isOptimizing}
-        className="px-5 py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 text-xs font-black rounded-2xl flex items-center gap-2 transition-all border border-purple-500/40 group min-w-[160px] justify-center shadow-lg active:scale-95"
+        className="px-5 py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-200 text-xs font-black rounded-2xl flex items-center gap-2 transition-all border border-purple-500/40 group min-w-[170px] justify-center shadow-[0_0_15px_rgba(168,85,247,0.1)] active:scale-95"
       >
         {isOptimizing ? (
           <span className="flex items-center gap-2">
-            <div className="w-3.5 h-3.5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
-            {loadProgress > 0 ? "Loading..." : "Wait..."}
+            <div className="w-4 h-4 border-2 border-purple-400/20 border-t-purple-400 rounded-full animate-spin" />
+            {loadProgress > 0 ? `Loading ${loadProgress}%` : "Initing GPU..."}
           </span>
         ) : (
           <>
