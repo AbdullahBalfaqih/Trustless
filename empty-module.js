@@ -1,36 +1,77 @@
-// Comprehensive Proxy module to satisfy Node.js requirements during browser builds
-export const createServer = () => ({ listen: () => {}, on: () => {}, close: () => {} });
-export const connect = () => ({ on: () => {}, write: () => {}, end: () => {} });
-export const spawn = () => ({ on: () => {}, stdout: { on: () => {} }, stderr: { on: () => {} } });
-export const exec = () => ({ on: () => {} });
-export const fork = () => ({ on: () => {} });
-export const existsSync = () => false;
-export const readFileSync = () => Buffer.from("");
-export const unlinkSync = () => {};
-export const mkdirSync = () => {};
-export const rmSync = () => {};
-export const statSync = () => ({ isDirectory: () => false });
-export const writeFile = () => {};
-export const writeFileSync = () => {};
-export const appendFileSync = () => {};
-export const readdirSync = () => [];
-export const join = (...args) => args.join("/");
-export const resolve = (...args) => args.join("/");
-export const randomBytes = (size) => Buffer.alloc(size);
-export const createHash = () => ({ update: () => ({ digest: () => "" }) });
+// Ultra-compatible Mock Module for Node.js internals in Browser
+const noop = () => {};
+const asyncNoop = async () => {};
 
-// Missing Node.js utilities required by QVAC browser environment
-export const fileURLToPath = (url) => url.replace('file://', '');
-export const pathToFileURL = (path) => `file://${path}`;
+const fileURLToPath = (url) => typeof url === 'string' ? url.replace('file://', '') : url;
+const pathToFileURL = (path) => `file://${path}`;
 
-export const promises = {
+const fsPromises = {
   readFile: async () => Buffer.from(""),
-  writeFile: async () => {},
-  unlink: async () => {},
-  mkdir: async () => {},
+  writeFile: asyncNoop,
+  unlink: asyncNoop,
+  mkdir: asyncNoop,
   readdir: async () => [],
   stat: async () => ({ isDirectory: () => false })
 };
 
-const empty = { promises, fileURLToPath, pathToFileURL };
-export default empty;
+const mock = {
+  // Functions
+  fileURLToPath,
+  pathToFileURL,
+  createServer: () => ({ listen: noop, on: noop, close: noop }),
+  connect: () => ({ on: noop, write: noop, end: noop }),
+  spawn: () => ({ on: noop, stdout: { on: noop }, stderr: { on: noop } }),
+  exec: () => ({ on: noop }),
+  fork: () => ({ on: noop }),
+  existsSync: () => false,
+  readFileSync: () => Buffer.from(""),
+  unlinkSync: noop,
+  mkdirSync: noop,
+  rmSync: noop,
+  statSync: () => ({ isDirectory: () => false }),
+  writeFile: noop,
+  writeFileSync: noop,
+  appendFileSync: noop,
+  readdirSync: () => [],
+  join: (...args) => args.join("/"),
+  resolve: (...args) => args.join("/"),
+  randomBytes: (size) => Buffer.alloc(size),
+  createHash: () => ({ update: () => ({ digest: () => "" }) }),
+  
+  // Objects
+  promises: fsPromises,
+};
+
+// Export for ESM (Named Exports)
+export const {
+  createServer,
+  connect,
+  spawn,
+  exec,
+  fork,
+  existsSync,
+  readFileSync,
+  unlinkSync,
+  mkdirSync,
+  rmSync,
+  statSync,
+  writeFile,
+  writeFileSync,
+  appendFileSync,
+  readdirSync,
+  join,
+  resolve,
+  randomBytes,
+  createHash,
+  promises,
+} = mock;
+
+export { fileURLToPath, pathToFileURL };
+
+// Export for ESM (Default Export)
+export default mock;
+
+// Support for CommonJS style if needed by the bundler
+if (typeof module !== 'undefined') {
+  module.exports = mock;
+}

@@ -32,6 +32,10 @@ const nextConfig = {
       "node:dns": path.resolve("./empty-module.js"),
       "node:url": path.resolve("./empty-module.js"),
     };
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      ...config.resolve.fallback,
+    };
     return config;
   },
   turbopack: {
