@@ -1,4 +1,5 @@
 import path from "path";
+import webpack from "webpack";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -9,10 +10,9 @@ const nextConfig = {
     unoptimized: true,
   },
   webpack: (config, { isServer }) => {
-    // 1. Force absolute path for the empty module
     const emptyModulePath = path.resolve("./empty-module.js");
 
-    // 2. Global Fallbacks
+    // 1. Broad Fallbacks
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
@@ -25,25 +25,21 @@ const nextConfig = {
       "node:os": false,
     };
 
-    // 3. The "Nuclear" Alias: Block the specific Node RPC file causing the trace
+    // 2. Precise Aliases for the actual files
     config.resolve.alias = {
       ...config.resolve.alias,
-      // Target the EXACT relative path used by the SDK internal imports
-      "@qvac/sdk/dist/client/rpc/node-rpc-client.js": emptyModulePath,
-      "#rpc": emptyModulePath, 
+      // Target the exact file that '#rpc' resolves to by default
+      [path.resolve("node_modules/@qvac/sdk/dist/client/rpc/node-rpc-client.js")]: emptyModulePath,
+      [path.resolve("node_modules/@qvac/sdk/dist/client/rpc/bare-client.js")]: emptyModulePath,
     };
 
-    // 4. Force externals for anything that might still sneak through
-    if (!isServer) {
-      config.externals = [
-        ...(config.externals || []),
-        {
-          "node:os": "undefined",
-          "node:path": "undefined",
-          "node:fs": "undefined",
-        },
-      ];
-    }
+    // 3. NormalModuleReplacementPlugin: The most reliable way to intercept '#rpc'
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(
+        /#rpc/,
+        emptyModulePath
+      )
+    );
 
     return config;
   },
