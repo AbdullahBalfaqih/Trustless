@@ -433,22 +433,32 @@ export function DesignaliCreative() {
     
     setIsAiOptimizing(true)
     const toastId = "qvac-ai"
-    toast.loading("QVAC: Processing Local Intelligence...", { id: toastId })
+    toast.loading("QVAC: Initializing Local Intelligence...", { id: toastId })
     
     try {
-      // Calling the local API route which runs the QVAC SDK safely on the server-side
-      const response = await fetch("/api/optimize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: jobDescription }),
-      });
+      // 1. Dynamically import the SDK to avoid build-time node dependency issues
+      const { QvacEngine } = await import("@qvac/sdk");
+      
+      // 2. Access the global engine variable
+      if (!globalAiEngine) {
+        toast.loading("QVAC: Loading Model into GPU...", { id: toastId });
+        globalAiEngine = new QvacEngine();
+        await globalAiEngine.initialize();
+      }
 
-      const data = await response.json();
+      toast.loading("QVAC: Reasoning locally (Sovereign Intelligence)...", { id: toastId });
       
-      if (data.error) throw new Error(data.error);
+      const prompt = `You are a professional project recruiter. Improve and expand this job description. Keep it concise but professional.
+      Description: ${jobDescription}`;
+
+      const response = await globalAiEngine.chat(prompt);
       
-      setJobDescription(data.result)
-      toast.success("AI Analysis completed via Local QVAC SDK!", { id: toastId })
+      if (response && response.content) {
+        setJobDescription(response.content)
+        toast.success("AI Analysis completed locally on your device!", { id: toastId })
+      } else {
+        throw new Error("No response from local engine");
+      }
       
     } catch (err: any) {
       console.error("QVAC Error:", err)
