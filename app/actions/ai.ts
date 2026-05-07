@@ -6,9 +6,6 @@ import {
   LLAMA_3_2_1B_INST_Q4_0,
 } from "@qvac/sdk";
 
-export const runtime = "nodejs";
-export const maxDuration = 120;
-
 /**
  * Sovereign AI Engine (Stable RPC Edition)
  * Updated to handle timeouts and ensure the engine starts correctly.
