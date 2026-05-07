@@ -17,7 +17,12 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
     toast.loading("Sovereign AI: Initializing QVAC SDK in Browser...", { id: toastId });
 
     try {
-      // 1. Dynamic import to ensure it only runs in browser and doesn't break build
+      // 0. Check for WebGPU support (Required for QVAC browser inference)
+      if (!navigator.gpu) {
+        throw new Error("WebGPU is not supported in this browser. Please use Chrome, Edge, or a browser with WebGPU enabled for local Sovereign AI.");
+      }
+
+      // 1. Dynamic import to ensure it only runs in browser
       const qvac = await import("@qvac/sdk");
       
       toast.loading("Sovereign AI: Loading LLM to GPU (WebGPU)...", { id: toastId });
