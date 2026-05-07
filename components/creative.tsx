@@ -433,16 +433,53 @@ export function DesignaliCreative() {
     
     setIsAiOptimizing(true)
     const toastId = "ai-polish"
-    toast.loading("Sovereign AI: Refining Requirements...", { id: toastId })
+    toast.loading("Sovereign AI: Analyzing via QVAC SDK...", { id: toastId })
     
-    // High-fidelity simulation for the Demo Video
-    setTimeout(() => {
-      const optimizedText = `[PRO-LEVEL OPTIMIZED DESCRIPTION]\n\nOVERVIEW:\n${jobDescription}\n\nTECHNICAL REQUIREMENTS:\n- Full-stack architecture with Solana integration\n- Secure PUSD payment gateway implementation\n- Sovereign AI agent compatibility\n\nDELIVERABLES:\n- Modular, audited smart contracts\n- High-fidelity responsive UI\n- Detailed technical documentation\n\nTIMELINE: 3-4 Weeks\nESTIMATED EFFORT: High`;
-      
-      setJobDescription(optimizedText)
-      toast.success("AI Polish Complete: Content Sovereignly Optimized!", { id: toastId })
-      setIsAiOptimizing(false)
-    }, 2000);
+    try {
+      // 1. Try Server-side AI first
+      const response = await fetch("/api/optimize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: jobDescription }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.result) {
+          setJobDescription(data.result);
+          toast.success("AI Polish Complete (Cloud SDK)!", { id: toastId });
+          setIsAiOptimizing(false);
+          return;
+        }
+      }
+
+      // 2. Fallback to Local AI (WebGPU)
+      toast.loading("Sovereign AI: Switching to Local Inference...", { id: toastId });
+      const { QvacEngine } = await import("@qvac/sdk");
+      if (!globalAiEngine) {
+        globalAiEngine = new QvacEngine();
+        await globalAiEngine.initialize();
+      }
+      const localRes = await globalAiEngine.chat(`Professionalize: ${jobDescription}`);
+      if (localRes?.content) {
+        setJobDescription(localRes.content);
+        toast.success("AI Polish Complete (Local SDK)!", { id: toastId });
+        setIsAiOptimizing(false);
+        return;
+      }
+
+      throw new Error("SDK unavailable");
+
+    } catch (err) {
+      // 3. Ultimate Fallback: High-fidelity simulation for the Demo Video
+      console.warn("AI Fallback triggered");
+      setTimeout(() => {
+        const optimizedText = `[Sovereign Optimized Description]\n\nPROPOSAL:\n${jobDescription}\n\nTECHNICAL ARCHITECTURE:\n- Trustless Escrow with PUSD\n- Sovereign AI Identity Verification\n- Confidential Umbra Transaction primitives`;
+        setJobDescription(optimizedText)
+        toast.success("AI Polish Complete (Sovereign Simulator)!", { id: toastId })
+        setIsAiOptimizing(false)
+      }, 1000);
+    }
   }
 
   const handleSendMessage = async () => {
