@@ -3,9 +3,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
-// Global engine variable to persist memory
-
-
 export default function AiOptimizer({ description, onOptimize }: { description: string, onOptimize: (val: string) => void }) {
   const [isOptimizing, setIsOptimizing] = useState(false);
 
@@ -16,31 +13,44 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
     }
 
     setIsOptimizing(true);
-    const toastId = "real-qvac-ai";
-    toast.loading("Sovereign AI: Initializing QVAC SDK...", { id: toastId });
+    const toastId = "qvac-ai";
+    toast.loading("Sovereign AI: Initializing QVAC SDK in Browser...", { id: toastId });
 
     try {
-      const response = await fetch("/api/optimize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description }),
+      // 1. Dynamic import to ensure it only runs in browser and doesn't break build
+      const qvac = await import("@qvac/sdk");
+      
+      toast.loading("Sovereign AI: Loading LLM to GPU (WebGPU)...", { id: toastId });
+      
+      // 2. Load the model using the official functional API
+      // We use LLAMA_3_2_1B_INST_Q4_0 as per docs
+      const modelId = await qvac.loadModel({ 
+        modelSrc: qvac.LLAMA_3_2_1B_INST_Q4_0 || "llama-3-8b-instruct",
+        modelType: "llm",
+        modelConfig: {}
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to optimize");
-      }
+      toast.loading("Sovereign AI: Processing Local Intelligence...", { id: toastId });
+      
+      // 3. Run completion
+      const run = qvac.completion({
+        modelId,
+        history: [
+          { role: "user", content: `Professionalize and expand this job description: ${description}` }
+        ]
+      });
 
-      const data = await response.json();
-      if (data.result) {
-        onOptimize(data.result);
-        toast.success("AI Polish Complete via QVAC SDK!", { id: toastId });
+      const result = await run.final;
+      
+      if (result && result.content) {
+        onOptimize(result.content);
+        toast.success("AI Polish Complete via Local QVAC SDK!", { id: toastId });
       } else {
-        throw new Error("No response from AI engine");
+        throw new Error("No response from QVAC engine");
       }
     } catch (err: any) {
-      console.error("AI Error:", err);
-      toast.error(`AI Error: ${err.message}.`, { id: toastId });
+      console.error("QVAC Browser Error:", err);
+      toast.error(`QVAC Error: ${err.message}. Make sure your browser supports WebGPU.`, { id: toastId });
     } finally {
       setIsOptimizing(false);
     }
@@ -55,14 +65,14 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
       {isOptimizing ? (
         <span className="flex items-center gap-2">
           <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-          Processing...
+          QVAC Processing...
         </span>
       ) : (
         <>
-          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-3.5 h-3.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          AI Polish (Real QVAC)
+          AI Polish (QVAC SDK)
         </>
       )}
     </button>
