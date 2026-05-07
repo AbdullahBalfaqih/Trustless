@@ -19,5 +19,15 @@ export const resolve = (...args) => args.join("/");
 export const randomBytes = (size) => Buffer.alloc(size);
 export const createHash = () => ({ update: () => ({ digest: () => "" }) });
 
-const empty = {};
+// Missing export required by QVAC static analysis
+export const promises = {
+  readFile: async () => Buffer.from(""),
+  writeFile: async () => {},
+  unlink: async () => {},
+  mkdir: async () => {},
+  readdir: async () => [],
+  stat: async () => ({ isDirectory: () => false })
+};
+
+const empty = { promises };
 export default empty;
