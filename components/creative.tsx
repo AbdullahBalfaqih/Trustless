@@ -198,13 +198,13 @@ export function DesignaliCreative() {
 
       const walletPubkeyStr = String((walletProvider as any).publicKey);
       const walletPubkey = new PublicKey(walletPubkeyStr);
-      
+
       if (isDemoMode) {
         toast.info(`[Demo Mode] Simulating Wallet Check: ${truncate(walletPubkeyStr)}`, { id: "wallet-check" });
         await new Promise(r => setTimeout(r, 1000));
         toast.loading("Demo: Locking PUSD in Trustless Vault...", { id: "escrow" });
         await new Promise(r => setTimeout(r, 2000));
-        
+
         const { error } = await supabase.from('jobs').update({ status: 'in_progress' }).eq('id', fundingApp.job_id)
         if (!error) {
           toast.success("Transaction Confirmed! PUSD is now secured.", { id: "escrow" });
@@ -337,7 +337,7 @@ export function DesignaliCreative() {
         await new Promise(resolve => setTimeout(resolve, 2000));
         toast.loading("Umbra: Verifying ZK-Proof Shield...", { id: toastId });
         await new Promise(resolve => setTimeout(resolve, 1500));
-        
+
         const { error } = await supabase.from('jobs').update({ status: 'completed' }).eq('id', app.job_id)
         if (!error) {
           toast.success("Success: PUSD released with Umbra Privacy Shield!", { id: toastId })
@@ -355,7 +355,7 @@ export function DesignaliCreative() {
       // Here we simulate the Umbra Shielding process. In a full production app, 
       // we would use the Umbra SDK to wrap the token transfer in a stealth address.
       toast.loading("Umbra: Generating Stealth Address for Recipient...", { id: toastId });
-      
+
       // We simulate a short delay for ZK-Proof generation (Umbra's core feature)
       await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -522,8 +522,8 @@ export function DesignaliCreative() {
               </PopoverContent>
             </Popover>
 
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className={cn(
                 "rounded-xl gap-2 px-4 h-9 transition-all text-xs",
                 isDemoMode ? "bg-white text-black font-bold" : "bg-white/5 text-white/40"
