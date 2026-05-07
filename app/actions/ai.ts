@@ -18,7 +18,7 @@ export async function PolishWithSovereignAI(description: string) {
     console.log("🚀 Starting QVAC Sovereign Engine (10m timeout mode)...");
     
     // Set internal SDK timeout variable
-    process.env.QVAC_RPC_TIMEOUT = "600000";
+    process.env.QVAC_RPC_TIMEOUT = "300000";
 
     // 1. Force a timeout limit for model loading
     const loadPromise = (async () => {
@@ -27,15 +27,15 @@ export async function PolishWithSovereignAI(description: string) {
           modelSrc: LLAMA_3_2_1B_INST_Q4_0,
           modelType: "llm",
           // @ts-ignore - Attempting to override internal timeout
-          timeout: 600000,
+          timeout: 300000,
         });
       }
       return engineModelId;
     })();
 
-    // Timeout guard for 10 minutes
+    // Timeout guard for 5 minutes
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Sovereign Engine failed to initialize after 10 minutes.")), 600000)
+      setTimeout(() => reject(new Error("Sovereign Engine failed to initialize after 5 minutes.")), 300000)
     );
 
     const modelId = await Promise.race([loadPromise, timeoutPromise]) as string;
