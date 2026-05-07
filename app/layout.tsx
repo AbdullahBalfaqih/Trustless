@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Trustless | Decentralized Escrow & Talent Hub",
   description: "Secure, on-chain employment and payments on Solana.",
+  icons: {
+    icon: "/images/logo.png",
+  },
 };
 
 export const runtime = "nodejs";
