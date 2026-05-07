@@ -52,6 +52,7 @@ const nextConfig = {
       "node:dns": { browser: "./empty-module.js" },
     },
   },
+  serverExternalPackages: ["@qvac/sdk"],
 };
 
 export default nextConfig;

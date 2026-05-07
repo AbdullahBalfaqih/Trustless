@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 // Global engine variable to persist memory
-let globalEngine: any = null;
+
 
 export default function AiOptimizer({ description, onOptimize }: { description: string, onOptimize: (val: string) => void }) {
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -20,28 +20,27 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
     toast.loading("Sovereign AI: Initializing QVAC SDK...", { id: toastId });
 
     try {
-      // 1. Isolated Dynamic Import
-      const { QvacEngine } = await import("@qvac/sdk");
-      
-      if (!globalEngine) {
-        toast.loading("Sovereign AI: Loading Llama Model to GPU...", { id: toastId });
-        globalEngine = new QvacEngine();
-        await globalEngine.initialize();
+      const response = await fetch("/api/optimize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to optimize");
       }
 
-      toast.loading("Sovereign AI: Processing Sovereign Intelligence...", { id: toastId });
-      
-      const response = await globalEngine.chat(`Expand and professionalize this job description: ${description}`);
-      
-      if (response && response.content) {
-        onOptimize(response.content);
+      const data = await response.json();
+      if (data.result) {
+        onOptimize(data.result);
         toast.success("AI Polish Complete via QVAC SDK!", { id: toastId });
       } else {
-        throw new Error("No response from engine");
+        throw new Error("No response from AI engine");
       }
     } catch (err: any) {
-      console.error("QVAC SDK Error:", err);
-      toast.error(`AI Error: ${err.message}. Ensure your browser supports WebGPU.`, { id: toastId });
+      console.error("AI Error:", err);
+      toast.error(`AI Error: ${err.message}.`, { id: toastId });
     } finally {
       setIsOptimizing(false);
     }
