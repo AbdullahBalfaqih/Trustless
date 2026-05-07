@@ -3,75 +3,102 @@
 import { 
   loadModel, 
   completion, 
+  translate,
+  ocr,
   LLAMA_3_2_1B_INST_Q4_0,
 } from "@qvac/sdk";
 
-/**
- * Sovereign AI Engine (Stable RPC Edition)
- * Updated to handle timeouts and ensure the engine starts correctly.
- */
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
+// Cached Model IDs for different tasks
 let engineModelId: string | null = null;
+let translatorModelId: string | null = null;
+let ocrModelId: string | null = null;
 
+/**
+ * 1. LLM OPTIMIZER (Text Generation)
+ */
 export async function PolishWithSovereignAI(description: string) {
   try {
-    console.log("🚀 Starting QVAC Sovereign Engine (10m timeout mode)...");
-    
-    // Set internal SDK timeout variable
     process.env.QVAC_RPC_TIMEOUT = "300000";
+    if (!engineModelId) {
+      engineModelId = await loadModel({
+        modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+        modelType: "llm",
+      });
+    }
 
-    // 1. Force a timeout limit for model loading
-    const loadPromise = (async () => {
-      if (!engineModelId) {
-        engineModelId = await loadModel({
-          modelSrc: LLAMA_3_2_1B_INST_Q4_0,
-          modelType: "llm",
-        });
-      }
-      return engineModelId;
-    })();
-
-    // Timeout guard for 5 minutes
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Sovereign Engine failed to initialize after 5 minutes.")), 300000)
-    );
-
-    const modelId = await Promise.race([loadPromise, timeoutPromise]) as string;
-
-    console.log("🧠 Reasoning...");
-
-    // 2. Perform Inference
     const result = await completion({
-      modelId: modelId,
+      modelId: engineModelId!,
       history: [
         {
           role: "user",
-          content: `Professionalize this job description. Improve tone and structure while keeping the core details: \n\n${description}`,
+          content: `Professionalize this job description: \n\n${description}`,
         },
       ],
     });
 
-    // 3. Extract Result
     const finalResult = (result as any).final ? await (result as any).final : result;
-    const content = typeof finalResult === "string" 
-      ? finalResult 
-      : finalResult?.content || finalResult?.text || finalResult;
-
     return {
       success: true,
-      content: content
+      content: typeof finalResult === "string" ? finalResult : finalResult?.content || finalResult?.text
     };
-
   } catch (error: any) {
-    console.error("❌ QVAC Error:", error);
-    
-    // If it's an RPC timeout, it might be due to a previous crashed process
-    // Clearing the cached ID to force a fresh start next time
+    console.error("QVAC LLM Error:", error);
     engineModelId = null;
+    return { success: false, error: error?.message };
+  }
+}
 
-    return {
-      success: false,
-      error: error?.message || "Sovereign Engine is busy or initializing. Please try again in a moment."
-    };
+/**
+ * 2. TRANSLATION (NMT)
+ */
+export async function TranslateWithSovereignAI(text: string, targetLang: string = "ar") {
+  try {
+    if (!translatorModelId) {
+      translatorModelId = await loadModel({
+        modelSrc: "nmt-opus-mt-en-ar", // Example English-Arabic model
+        modelType: "nmt",
+      });
+    }
+
+    const result = await translate({
+      modelId: translatorModelId!,
+      text: text,
+    });
+
+    return { success: true, content: (result as any).text || result };
+  } catch (error: any) {
+    console.error("QVAC NMT Error:", error);
+    translatorModelId = null;
+    return { success: false, error: "Translation model loading or inference failed." };
+  }
+}
+
+/**
+ * 3. OCR (Image to Text)
+ */
+export async function ExtractTextWithSovereignOCR(imageBase64: string) {
+  try {
+    if (!ocrModelId) {
+      ocrModelId = await loadModel({
+        modelSrc: "ocr-tesseract-fast",
+        modelType: "ocr",
+      });
+    }
+
+    // Process image buffer
+    const buffer = Buffer.from(imageBase64.split(",")[1], "base64");
+    const result = await ocr({
+      modelId: ocrModelId!,
+      image: buffer,
+    });
+
+    return { success: true, content: (result as any).text || result };
+  } catch (error: any) {
+    console.error("QVAC OCR Error:", error);
+    ocrModelId = null;
+    return { success: false, error: "OCR engine failure." };
   }
 }

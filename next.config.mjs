@@ -6,8 +6,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // In Next.js 15+, serverExternalPackages is a top-level property
-  serverExternalPackages: ["@qvac/sdk", "@qvac/llm-llamacpp"],
+  // QVAC Multi-Modal Bundle Configuration
+  serverExternalPackages: [
+    "@qvac/sdk", 
+    "@qvac/llm-llamacpp", 
+    "@qvac/translation-nmtcpp", 
+    "@qvac/ocr-onnx", 
+    "@qvac/tts-onnx"
+  ],
 };
 
 export default nextConfig;
