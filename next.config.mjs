@@ -9,7 +9,7 @@ const nextConfig = {
     unoptimized: true,
   },
   webpack: (config) => {
-    // Total Fallback for ALL Node.js built-ins to ensure compatibility in browser builds
+    // 1. Core Fallbacks
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
@@ -25,9 +25,6 @@ const nextConfig = {
       http: false,
       https: false,
       zlib: false,
-      buffer: false,
-      util: false,
-      events: false,
       "node:fs": false,
       "node:path": false,
       "node:os": false,
@@ -41,13 +38,18 @@ const nextConfig = {
       "node:http": false,
       "node:https": false,
       "node:zlib": false,
-      "node:buffer": false,
-      "node:util": false,
-      "node:events": false,
     };
+
+    // 2. Force alias Node-specific files to an empty module to prevent deep crawling
+    const emptyModulePath = path.resolve("./empty-module.js");
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "node-rpc-client": emptyModulePath,
+      "./node-rpc-client": emptyModulePath,
+    };
+
     return config;
   },
-  // Essential for allowing serverless environments to handle the package correctly
   serverExternalPackages: ["@qvac/sdk"],
 };
 
