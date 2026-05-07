@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { loadQvac } from "@/lib/qvac-client";
 
 // Singleton to persist AI model across component re-renders
 let cachedModelId: string | null = null;
@@ -25,7 +26,7 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
     }
 
     if (!hasWebGPU) {
-      toast.error("WebGPU is not supported or disabled in your browser. Use Chrome/Edge for Sovereign AI.");
+      toast.error("WebGPU is not supported. Please use Chrome/Edge.");
       return;
     }
 
@@ -34,7 +35,9 @@ export default function AiOptimizer({ description, onOptimize }: { description: 
     toast.loading("Sovereign AI: Initializing Local Intelligence...", { id: toastId });
 
     try {
-      const qvac = await import("@qvac/sdk");
+      // Use the ninja loader
+      const qvac = await loadQvac();
+      if (!qvac) throw new Error("Could not load QVAC SDK");
       
       // 1. Initialize or get cached model (1B is perfect for browser)
       if (!cachedModelId && !isInitializing) {
