@@ -40,6 +40,14 @@ import { useRouter } from "next/navigation"
 import { getProgram, getEscrowPDA, PROGRAM_ID } from "@/lib/solana-escrow"
 import * as anchor from "@coral-xyz/anchor"
 import { useAppKitProvider } from "@reown/appkit/react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export function EmployerDashboard() {
   const router = useRouter()
