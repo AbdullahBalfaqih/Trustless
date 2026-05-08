@@ -12,11 +12,27 @@ The global freelance industry currently relies on centralized intermediaries tha
 
 Trustless reimagines this flow by combining three pillars of sovereign technology:
 
-### 1. Trustless Escrow with PUSD
-The platform utilizes a custom Anchor-based smart contract vault on Solana Mainnet. When an employer hires a freelancer, the agreed-upon budget in PUSD is locked in a secure on-chain vault. These funds are held in a non-custodial manner and are only released upon verified project completion. This eliminates the risk of non-payment for freelancers and ensures employers that their capital is only disbursed for completed deliverables.
+## 🚀 Sovereign AI & PUSD Integration
 
-### 2. Sovereign Intelligence via QVAC SDK
-Trustless integrates the QVAC SDK to provide job description optimization and analysis. Unlike traditional AI platforms, QVAC enables hardware-accelerated inference directly on the user's device (Local-first AI). This ensures that sensitive job requirements and project descriptions never leave the user's machine, fulfilling the requirement for sovereign intelligence and absolute data privacy.
+Trustless is a high-performance, local-first talent hub built to demonstrate the power of **Sovereign Intelligence** and **Stable Payments**.
+
+### 🧠 QVAC AI Engine (On-Device)
+We have integrated the **Tether QVAC SDK** to provide a multi-modal AI experience that respects user privacy. Unlike traditional platforms, our AI features run **locally on your hardware** using the Node.js runtime and Vulkan-accelerated GPU inference.
+- **Local LLM:** Professionalizes job descriptions locally via `@qvac/llm-llamacpp`.
+- **Sovereign Translation:** Uses `@qvac/translation-nmtcpp` for private, offline NMT.
+- **Local OCR:** Scans CVs and documents without cloud processing via `@qvac/ocr-onnx`.
+
+### 💸 PUSD Escrow System
+Security is handled on-chain via **Solana**. We utilize **PUSD (Palm USD)** for our escrow contracts to ensure:
+- **Stability:** Protection against market volatility.
+- **Trustless Execution:** Funds are released only upon milestone completion.
+- **Instant Settlements:** Global payments at the speed of Solana.
+
+## 🛠️ Local Setup
+To see the Sovereign AI in action, you **must** run the project locally:
+1. `npm install`
+2. `npm run dev`
+3. Ensure your local machine supports Vulkan/GPU acceleration for the best QVAC performance.
 
 ### 3. Transactional Privacy via Umbra SDK
 Financial privacy is a prerequisite for professional business operations. Trustless integrates the Umbra SDK to offer confidential transfers. By utilizing stealth addresses and zero-knowledge primitives, the platform allows for the release of payments in a way that shields the freelancer's wallet history and overall balance from the employer and public blockchain explorers, while still maintaining compliance and verifiability for the parties involved.
